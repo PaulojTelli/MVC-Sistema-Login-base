@@ -9,6 +9,13 @@ use PHPMailer\PHPMailer\Exception;
 
 class Sistema
 {
+
+    public function index()
+    {
+        header("Location: " . env('APP_URL') . "/Inicio/index");
+        exit;
+    }
+
     // Começo de login 
     public function login()
     {
@@ -71,7 +78,7 @@ class Sistema
                             $_SESSION['token'] = $user['token'];
 
                             // Redirecionar para o dashboard
-                            header("Location: ?router=Inicio/index");
+                            header("Location: " . env('APP_URL') . "/Inicio/index");
                             exit;
                         } else {
                             // Autenticação falhou
@@ -165,7 +172,7 @@ class Sistema
                     $this->enviarEmailCadastro($username, $email, $password);
 
                     // Redireciona para a página de login após o registro bem-sucedido
-                    header("Location: ?router=Sistema/login");
+                    header("Location: " . env('APP_URL') . "/Sistema/login");
                     exit;
                 } catch (\Exception $e) {
                     $error = $e->getMessage();
@@ -185,20 +192,20 @@ class Sistema
         try {
             // Configurações do servidor SMTP
             $mail->isSMTP();
-            $mail->Host       = 'smtp.hostinger.com';
+            $mail->Host       = env('SMTP_HOST');
             $mail->SMTPAuth   = true;
-            $mail->Username   = 'mailer@scgeomatica.com.br';
-            $mail->Password   = '@Scgeomatica2024@';
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // ou PHPMailer::ENCRYPTION_SMTPS
-            $mail->Port       = 465;
+            $mail->Username   = env('SMTP_USER');
+            $mail->Password   = env('SMTP_PASS');
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; 
+            $mail->Port       = env('SMTP_PORT');
 
             // Remetente e destinatário
-            $mail->setFrom('mailer@scgeomatica.com.br', 'SC Geomática');
+            $mail->setFrom(env('SMTP_USER'), env('APP_NAME'));
             $mail->addAddress($email, $username);
 
             // Conteúdo do e-mail
             $mail->isHTML(true);
-            $mail->Subject = 'Bem-vindo ao Suporte SC Geomática - Instruções de Acesso';
+            $mail->Subject = 'Bem-vindo ao Suporte '.env('APP_NAME').' - Instruções de Acesso';
 
 
 
@@ -271,7 +278,7 @@ class Sistema
 
         // Verificar se usuário e token estão presentes
         if (!$user || !$token) {
-            header("Location: ?router=Sistema/logout");
+            header("Location: " . env('APP_URL') . "/Sistema/logout");
             exit;
         }
 
@@ -280,7 +287,7 @@ class Sistema
 
         if (!$userAut) {
             // Se inválido, redireciona para logout
-            header("Location: ?router=Sistema/logout");
+            header("Location: " . env('APP_URL') . "/Sistema/logout");
             exit;
         } else {
             // Inicializar variáveis para a view
@@ -309,7 +316,7 @@ class Sistema
 
                     if ($updateSuccess) {
                         // Senha atualizada com sucesso, redireciona ou exibe mensagem
-                        $sucesso = "Senha atualizada com sucesso. <a href='?router=Sistema/login'>Clique aqui para fazer login.</a>";
+                        $sucesso = "Senha atualizada com sucesso. <a href=' <?= env('APP_URL') ?> Sistema/login'>Clique aqui para fazer login.</a>";
                         // Opcional: Invalida o token após a atualização
                         $userModel->invalidateTokenRecuperacao($user, $token);
                     } else {
@@ -328,112 +335,92 @@ class Sistema
 
     public function gerarRecuperacao()
     {
+        $erro = '';
+        $sucesso = '';
+
         if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $user = trim($_POST['username'] ?? '');
 
-            // Verifica se o campo de usuário não está vazio
             if (empty($user)) {
-                // Redireciona ou exibe uma mensagem de erro
-                echo "O campo de usuário é obrigatório.";
-                exit;
-            }
+                $erro = "Informe seu usuário para receber o link de recuperação.";
+            } else {
 
-            // Instanciar o model de usuário
-            $userModel = new User();
-            $email = $userModel->getUserEmailByUsername($user);
+                $userModel = new User();
+                $email = $userModel->getUserEmailByUsername($user);
 
-            // Verifica se o email foi encontrado
-            if (!$email) {
-                // Evite revelar se o usuário existe ou não por razões de segurança
+                // Se seu model retornar array por algum motivo:
+                if (is_array($email)) {
+                    $email = $email['email'] ?? null;
+                }
 
-                exit;
-            }
+                // Mensagem genérica SEM entregar se existe ou não (boa prática)
+                $msgGenerica = "Se o usuário existir, você receberá um e-mail com instruções para redefinir a senha.";
 
-            // Gerar token de recuperação de forma segura
-            try {
-                $tokenRecuperacao = bin2hex(random_bytes(32));
-                echo "Token gerado <br><br> ";
-            } catch (Exception $e) {
-                // Em caso de erro na geração do token
-                echo "Erro ao gerar token de recuperação. Tente novamente.";
-                exit;
-            }
+                if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $sucesso = $msgGenerica;
+                } else {
 
-            $dataValidade = date('Y-m-d H:i:s', strtotime('+1 day'));
-            $userModel->updateTokenRecuperacao($user, $tokenRecuperacao, $dataValidade);
-            echo "Token atualizado <br><br> ";
+                    try {
+                        $tokenRecuperacao = bin2hex(random_bytes(32));
+                        $dataValidade = date('Y-m-d H:i:s', strtotime('+1 day'));
+                        $userModel->updateTokenRecuperacao($user, $tokenRecuperacao, $dataValidade);
 
-            // Defina a URL base do seu site
-            $baseUrl = "localhost:3000"; // Substitua pela URL real do seu site
-            $linkRecuperacao = $baseUrl . "/?router=Sistema/recuperarSenha&user=" . urlencode($user) . "&token=" . urlencode($tokenRecuperacao);
-            echo "link gerado: " . $linkRecuperacao . " <br><br> ";
+                        $linkRecuperacao = env('APP_URL')
+                            . "" . env('APP_URL') . "/Sistema/recuperarSenha"
+                            . "&user=" . urlencode($user)
+                            . "&token=" . urlencode($tokenRecuperacao);
 
-            // Configurar o PHPMailer
-            $mail = new PHPMailer(true);
+                        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
 
-            try {
-                // Configurações do servidor SMTP
-                $mail->isSMTP();
-                $mail->Host       = 'smtp.hostinger.com';
-                $mail->SMTPAuth   = true;
-                $mail->Username   = 'mailer@scgeomatica.com.br';
-                $mail->Password   = '@Scgeomatica2024@';
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // TLS ou SSL
-                $mail->Port       = 465;
+                        // SMTP
+                        $mail->isSMTP();
+                        $mail->Host       = 'smtp.hostinger.com';
+                        $mail->SMTPAuth   = true;
+                        $mail->Username   = 'mailer@scgeomatica.com.br';
+                        $mail->Password   = '@Scgeomatica2024@';
+                        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+                        $mail->Port       = 465;
 
-                // Remetente e destinatário
-                $mail->setFrom('mailer@scgeomatica.com.br', 'SC Geomática');
-                $mail->addAddress($email, $user);
+                        $mail->setFrom('mailer@scgeomatica.com.br', 'SC Geomática');
+                        $mail->addAddress($email, $user);
 
-                // Conteúdo do e-mail
-                $mail->isHTML(true);
-                $mail->Subject = 'Recuperação de Senha - Suporte SC Geomática';
-                $mail->Body    = "
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Recuperação de Senha</title>
-                </head>
-                <body style='font-family: Arial, sans-serif;'>
-                    <div style='background-color: #c7c4c4; padding: 20px;'>
-                        <div style='background: #007bff; padding: 10px; color: white; text-align: center; border-radius: 10px;'>
-                            <h1>Recuperar Senha - SC Geomática</h1>
-                            <p>Siga as instruções abaixo para recuperar sua senha.</p>
+                        $mail->isHTML(true);
+                        $mail->Subject = 'Recuperação de Senha - Suporte SC Geomática';
+
+                        $mail->Body = "
+                        <div style='font-family: Arial, sans-serif;'>
+                            <h2>Recuperação de senha</h2>
+                            <p>Olá, <strong>{$user}</strong>.</p>
+                            <p>Clique no botão abaixo para redefinir sua senha:</p>
+                            <p>
+                              <a href='{$linkRecuperacao}'
+                                 style='display:inline-block;background:#0d6efd;color:#fff;text-decoration:none;padding:12px 16px;border-radius:10px;'>
+                                 Redefinir senha
+                              </a>
+                            </p>
+                            <p style='color:#666;font-size:12px;'>Se você não solicitou, ignore este e-mail.</p>
                         </div>
-                        <div style='background-color: white; padding: 20px; margin-top: 10px; border-radius: 10px;'>
-                            <p>Olá, <strong>{$user}</strong>!</p>
-                            <p>Você solicitou a recuperação da sua senha. Clique no link abaixo para redefini-la:</p>
-                            <p><a href='{$linkRecuperacao}'>Redefinir Senha</a></p>
-                            <p>Se você não solicitou essa recuperação, por favor, ignore este e-mail.</p>
-                            <hr>
-                            <p>Quaisquer dúvidas, entre em contato conosco através do <a href='https://scgeomatica.com.br/fale-conosco/'>Fale Conosco</a>.</p>
-                        </div>
-                        <div style='margin-top: 20px; text-align: center; font-size: 0.8em; color: #777;'>
-                            <p><strong>AVISO:</strong><br>
-                            Esta campanha está sendo gerenciada por Studio Silver - Marketing Digital. Consulte nossos serviços em <a href='https://www.studiosilver.com.br'>www.studiosilver.com.br</a>.</p>
-                            <img style='margin-left: 3px; transform: translateY(-2.5px);' src='https://studiosilver.com.br/lib/logo-studiosilver.png' alt='Logo Studio Silver'>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            ";
-                $mail->AltBody = "Olá, {$user}. Você solicitou a recuperação da sua senha. Use o link para redefinir: {$linkRecuperacao}";
+                    ";
 
-                // Enviar o e-mail
-                $mail->send();
-                echo 'E-mail de recuperação de senha enviado com sucesso!';
-            } catch (Exception $e) {
-                // Em produção, evite exibir erros detalhados para o usuário
-                // Utilize logs para registrar o erro
-                error_log("Erro ao enviar e-mail de recuperação para {$email}: {$mail->ErrorInfo}");
-                echo "Erro ao enviar e-mail de recuperação de senha. Tente novamente mais tarde.";
+                        $mail->AltBody = "Olá, {$user}. Redefina sua senha: {$linkRecuperacao}";
+
+                        $mail->send();
+
+                        // feedback bonito e “limpo”
+                        $sucesso = $msgGenerica;
+                    } catch (\Throwable $e) {
+                        error_log("Erro recuperação senha: " . $e->getMessage());
+                        $erro = "Não foi possível enviar o e-mail agora. Tente novamente em alguns minutos.";
+                    }
+                }
             }
         }
 
-        // Carregar a view da página de esqueci a senha
+        // A view vai usar $erro e $sucesso
         require_once __DIR__ . '/../views/esqueci-senha.php';
     }
+
 
 
     public function logout()
