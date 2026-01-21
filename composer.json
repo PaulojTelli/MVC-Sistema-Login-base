@@ -1,0 +1,21 @@
+{
+    "name": "paulojtellli/meusistema",
+    "description": "Sistema MVC padrão desenvolvido para gerenciamento de usuários, autenticação e administração de conteúdo.",
+    "autoload": {
+        "psr-4": {
+            "app\\": "app/",
+            "core\\": "core/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Paulo João Telli",
+            "email": "paulo@seuemail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=7.2",
+        "phpmailer/phpmailer": "^6.8"
+    }
+}

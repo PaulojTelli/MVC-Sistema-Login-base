@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --offcanvas-width: 270px;
+  --topNavbarHeight: 56px;
+}
+
+* {
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background-color: #d9dbdd;
+}
+
+a {
+  text-decoration: none;
+}
+
+.sidenav .bordered {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-nav {
+  width: var(--offcanvas-width) !important;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-link .right-icon {
+  display: inline-flex;
+  transition: all ease 0.25s;
+}
+
+.sidebar-link[aria-expanded="true"] .right-icon {
+  transform: rotate(180deg) !important;
+}
+
+.bg-purple {
+  background-color: #041205e3;
+}
+
+.offcanvas-header {
+  background-color: #0c270d;
+  font-size: 25px;
+  padding: 10px;
+}
+
+.breadcrumb-item {
+  font-size: 18px;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.navbar-brand {
+  text-transform: uppercase;
+}
+
+.title-home-card {
+  font-size: 18px;
+}
+
+#loading {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.75) url(../imgs/loading.gif) no-repeat center center;
+  background-size: 80px;
+  z-index: 10000;
+}
+
+@media (min-width:992px) {
+  body {
+    overflow: auto !important;
+  }
+
+  .offcanvas-backdrop::before {
+    display: none;
+  }
+
+  main {
+    margin-left: var(--offcanvas-width);
+  }
+
+  .sidebar-nav {
+    transform: none !important;
+    visibility: visible !important;
+  }
+}
