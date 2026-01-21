@@ -12,16 +12,17 @@ class Router
     {
         $router = $this->url();
 
-        if (!empty($router[0]) && file_exists('app/controllers/' . ucfirst($router[0]) . '.php')) {
+        if (!empty($router[0]) && file_exists(__DIR__ . '/../app/controllers/' . ucfirst($router[0]) . '.php')) {
             $this->controller = ucfirst($router[0]);
             unset($router[0]);
         }
 
         $class = "\\app\\controllers\\" . $this->controller;
+
         if (class_exists($class)) {
             $object = new $class;
 
-            if (isset($router[1]) && method_exists($class, $router[1])) {
+            if (isset($router[1]) && method_exists($object, $router[1])) {
                 $this->method = $router[1];
                 unset($router[1]);
             }
@@ -30,15 +31,19 @@ class Router
 
             call_user_func_array([$object, $this->method], $this->param);
         } else {
-            // Página não encontrada
             echo "Controller not found!";
         }
     }
 
-    private function url()
+    private function url(): array
     {
-        $parse_url = explode("/", filter_input(INPUT_GET, 'router', FILTER_SANITIZE_URL));
-        return $parse_url;
+        $router = filter_input(INPUT_GET, 'router', FILTER_SANITIZE_URL) ?? '';
+        $router = trim($router, '/');
+
+        if ($router === '') {
+            return [];
+        }
+
+        return explode('/', $router);
     }
 }
-?>

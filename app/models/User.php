@@ -171,7 +171,7 @@ public function invalidateTokenRecuperacao($user, $token){
 public function generateTokenRecuperacao($user){
     try {
         $token = bin2hex(random_bytes(16));
-        $sql = "UPDATE users SET tokenrecuperacao = :token WHERE username = :username";
+        $sql = "UPDATE users SET token_recuperacao = :token WHERE username = :username";
         $stmt = $this->connect()->prepare($sql);
         $stmt->bindParam(':token', $token, PDO::PARAM_STR);
         $stmt->bindParam(':username', $user, PDO::PARAM_STR);

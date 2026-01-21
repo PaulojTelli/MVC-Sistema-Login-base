@@ -1,4 +1,17 @@
 <?php
+
+$domain = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$domain = preg_replace('/:\d+$/', '', $domain);
+
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => $domain,
+    'secure' => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+    'httponly' => true,
+    'samesite' => 'Strict',
+]);
+
 session_start();
 
 require_once __DIR__ . '/vendor/autoload.php';

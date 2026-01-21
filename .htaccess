@@ -1,9 +1,12 @@
 Options -Indexes
 
 RewriteEngine On
+
+# (opcional) remove index.php da URL se alguém acessar direto
+RewriteCond %{THE_REQUEST} \s/+index\.php[\s?] [NC]
+RewriteRule ^index\.php$ / [R=301,L]
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
 RewriteRule ^(.*)$ index.php?router=$1 [QSA,L]
-
-
