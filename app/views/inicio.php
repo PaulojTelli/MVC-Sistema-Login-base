@@ -53,8 +53,8 @@
             <h5 class="card-title mb-3">Comece agora</h5>
             <p class="text-muted">Faça login para acessar o painel e gerenciar os recursos disponíveis.</p>
             <div class="d-grid gap-2">
-              <a class="btn btn-primary" href="/Sistema/login">Acessar minha conta</a>
-              <a class="btn btn-outline-secondary" href="/Sistema/cadastro">Não tenho cadastro</a>
+              <a class="btn btn-primary" href="<?= env('APP_URL') ?>/Sistema/login">Acessar minha conta</a>
+              <a class="btn btn-outline-secondary" href="<?= env('APP_URL') ?>/Sistema/cadastro">Não tenho cadastro</a>
             </div>
           <?php endif; ?>
         </div>
